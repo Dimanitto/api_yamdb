@@ -63,6 +63,7 @@ class GetTokenSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(),
         default=serializers.CurrentUserDefault()
     )"""
+    
     confirm_code = serializers.ReadOnlyField()
 
     def validate(self, data):

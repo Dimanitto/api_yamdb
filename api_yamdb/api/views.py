@@ -38,7 +38,7 @@ class GetToken(generics.CreateAPIView):
     serializer_class = GetTokenSerializer
 
     def perform_update(self, serializer):
-        if user := UserAuth.objects.get(username=self.username):
+        if user := UserAuth.objects.get(username__username=self.username):
             print(user,'-------------------------------------------------')
             user.confirm_code = get_tokens_for_user(user)
             #user.confirm_code = user.get_tokens_for_user()
