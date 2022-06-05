@@ -1,61 +1,51 @@
-from django.shortcuts import render
-from rest_framework.permissions import AllowAny
-from rest_framework import generics
-from .serializers import SignUpSerializer, GetTokenSerializer
-from reviews.models import User, UserAuth
 from django.core.mail import send_mail
+from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.serializers import TokenObtainSerializer
-from django.core.exceptions import PermissionDenied
+from rest_framework import permissions, status, viewsets
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
+from reviews.models import User, UserAuth
+
+from .permissions import IsAdmin
+from .serializers import (GetTokenSerializer, SignUpSerializer,
+                          UserProfileSerializer, UserSerializer)
 
 
-class SignUpCreate(generics.CreateAPIView):
-    queryset = User.objects.all()
+class SignUpCreate(viewsets.ViewSet):
     permission_classes = (AllowAny,)
-    serializer_class = SignUpSerializer
+
+    def create(self, request):
+        serializer = SignUpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-"""class GetToken(TokenObtainPairView):
-    queryset = UserAuth.objects.all()
-    permission_classes = (AllowAny,)
-    serializer_class = GetTokenSerializer"""
-
-
-def get_tokens_for_user(user) -> str:
-        refresh = RefreshToken.for_user(user)
-        token = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
-        return token['access']
-
-
-class GetToken(generics.CreateAPIView):
-    queryset = UserAuth.objects.all()
-    permission_classes = (AllowAny,)
-    serializer_class = GetTokenSerializer
-
-    def perform_update(self, serializer):
-        if user := UserAuth.objects.get(username__username=self.username):
-            print(user,'-------------------------------------------------')
-            user.confirm_code = get_tokens_for_user(user)
-            #user.confirm_code = user.get_tokens_for_user()
-            user.save(update_fields=["confirm_code"])
-            serializer.save()
-            #user = serializer.save()
-        else:
-            raise PermissionDenied('Изменение чужого контента запрещено!')
-
-    """def perform_create(self, serializer):
-        if user := UserAuth.objects.get(username=serializer.username):
-            token = get_tokens_for_user(user)
-            print(token['access'])
-        serializer.save(username=serializer.username)"""
-
-#class GetToken(generics.CreateAPIView):
-    ...
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_jwt_token(request):
+    serializer = GetTokenSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    user = get_object_or_404(
+        User,
+        username=serializer.validated_data['username']
+    )
+    confirm_code = serializer.validated_data['confirmation_code']
+    username = serializer.validated_data['username']
+    if (
+        confirm_code == UserAuth.objects.get(
+            username__username=username
+        ).confirmation_code
+    ):
+        token = AccessToken.for_user(user)
+        return Response({'token': str(token)}, status=status.HTTP_200_OK)
+    return Response(
+        {'Ошибка': 'Некорректно указано поле'},
+        status=status.HTTP_400_BAD_REQUEST
+    )
 
 
 def send_message(email: str, username: str) -> None:
@@ -63,30 +53,51 @@ def send_message(email: str, username: str) -> None:
     chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
     # Сгенерируем код активации
     secret_key = get_random_string(6, chars)
-
-    print(username)
     user = User.objects.get(username=username)
-    print(user.pk)
+
     UserAuth.objects.create(
         username_id=user.pk,
         confirmation_code=secret_key
     )
 
-    print(UserAuth.objects.all())
-
     send_mail(
-            'Авторизация на сайтe',
-            (f'Уважаемый {username}, '
-            f'Kод подтверждения = {secret_key}'),
-            'yamdb@yandex.ru',  # Это поле "От кого"
-            [email],  # Это поле "Кому"
+        'Авторизация на сайтe',
+        (f'Уважаемый {username}, '
+         f'Kод подтверждения = {secret_key}'),
+        'yamdb@yandex.ru',  # Это поле "От кого"
+        [email],  # Это поле "Кому"
     )
 
 
-"""def get_tokens_for_user(user):
-    refresh = RefreshToken.for_user(user)
+class UserProfileViewSet(viewsets.ModelViewSet):
+    lookup_field = "username"
+    queryset = User.objects.all()
+    permission_classes = (IsAdmin,)
+    serializer_class = UserSerializer
+    pagination_class = PageNumberPagination
 
-    return {
-        'refresh': str(refresh),
-        'access': str(refresh.access_token),
-    }"""
+    @action(
+        methods=['get', 'patch'],
+        detail=False,
+        url_path='me',
+        permission_classes=(permissions.IsAuthenticated,),
+        serializer_class=UserProfileSerializer
+    )
+    def user_profile(self, request):
+        user = request.user
+        if request.method == 'GET':
+            serializer = self.get_serializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        if request.method == 'PATCH':
+            serializer = self.get_serializer(
+                user,
+                data=request.data,
+                partial=True,   # частичное обновление полей
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(
+            {'Ошибка': 'Некорректно указано поле'},
+            status=status.HTTP_400_BAD_REQUEST
+        )

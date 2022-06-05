@@ -1,6 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
-from rest_framework_simplejwt.tokens import RefreshToken
+from django.db import models
 
 
 class User(AbstractUser):
@@ -12,8 +11,8 @@ class User(AbstractUser):
         (USER, 'Пользователь'),
         (MODERATOR, 'Модератор'),
     )
-    
-    username = models.CharField(max_length=150, unique=True, null=True)
+
+    username = models.CharField(max_length=150, unique=True)
     email = models.EmailField(unique=True)
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
@@ -26,7 +25,7 @@ class User(AbstractUser):
         help_text='Пользовательские роли'
     )
 
-    REQUIRED_FIELDS = ['email',]
+    REQUIRED_FIELDS = ['email', ]
 
     @property
     def is_moderator(self):
@@ -35,19 +34,6 @@ class User(AbstractUser):
     @property
     def is_admin(self):
         return self.role == self.ADMIN
-
-def get_tokens_for_user(user) -> str:
-        refresh = RefreshToken.for_user(user)
-        token = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
-        return token['access']
-
-        """return {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }"""
 
 
 class UserAuth(models.Model):
@@ -60,21 +46,6 @@ class UserAuth(models.Model):
         'Код подтверждения',
         max_length=6
     )
-    #confirm_code = models.CharField('Код подтверждения', blank=True , default=get_tokens_for_user(username), max_length=150)
-    confirm_code = models.CharField('Token', blank=True, max_length=150)
-
-    """def get_tokens_for_user(self) -> str:
-        refresh = RefreshToken.for_user(self.pk)
-        token = {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }
-        return token['access']
-
-        return {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-        }"""
 
     def __str__(self):
         return f'{self.username}={self.confirmation_code}'
