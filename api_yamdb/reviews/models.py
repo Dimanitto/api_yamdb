@@ -1,8 +1,12 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 from django.core.validators import (
     RegexValidator, MinValueValidator, MaxValueValidator)
 
 from datetime import datetime
+
+
+User = get_user_model()
 
 
 class Category(models.Model):
