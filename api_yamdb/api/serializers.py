@@ -22,7 +22,6 @@ class GenreSerializer(serializers.ModelSerializer):
         lookup_field = 'slug'
 
 
-
 class TitleSerializer(serializers.ModelSerializer):
     genre = serializers.SlugRelatedField(
         queryset=Genre.objects.all(),
@@ -48,6 +47,26 @@ class TitleSerializer(serializers.ModelSerializer):
                 average_rating += review.score
             return (average_rating / len(reviews))
         return None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        genre_list = []
+        for genre_slug in data['genre']:
+            genre = Genre.objects.get(slug=genre_slug)
+            genre_dict = {
+                'name': genre.name,
+                'slug': genre.slug
+            }
+            genre_list.append(genre_dict)
+
+        category = Category.objects.get(slug=data['category'][0])
+        category_dict = {
+            'name': category.name,
+            'slug': category.slug
+        }
+        data['genre'] = genre_list
+        data['category'] = category_dict
+        return data
 
 
 class SignUpSerializer(serializers.ModelSerializer):

@@ -1,16 +1,15 @@
 from django.shortcuts import get_object_or_404
 from django.core.mail import send_mail
-from django.shortcuts import get_object_or_404
 from django.utils.crypto import get_random_string
 
 from rest_framework import viewsets, filters, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 
 from reviews.models import (
     Title, Category,
