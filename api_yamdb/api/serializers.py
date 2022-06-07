@@ -2,7 +2,25 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
 
-from reviews.models import (Comment, Review, Title, Genre, Category)
+from reviews.models import (Comment, Review, Title, Genre, Category, User)
+import api.views
+
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = ('name', 'slug')
+        lookup_field = 'slug'
+
+
+class GenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Genre
+        fields = ('name', 'slug')
+        lookup_field = 'slug'
+
 
 
 class TitleSerializer(serializers.ModelSerializer):
@@ -16,24 +34,77 @@ class TitleSerializer(serializers.ModelSerializer):
         many=True,
         slug_field='slug'
     )
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
         fields = ('__all__')
 
+    def get_rating(self, obj):
+        reviews = obj.reviews.all()
+        if reviews.exists():
+            average_rating = 0
+            for review in reviews:
+                average_rating += review.score
+            return (average_rating / len(reviews))
+        return None
 
-class GenreSerializer(serializers.ModelSerializer):
+
+class SignUpSerializer(serializers.ModelSerializer):
+
+    def validate_username(self, value):
+        if "me" == value.lower():
+            raise serializers.ValidationError(
+                "Использовать имя 'me' в качестве username запрещено."
+            )
+        return value
 
     class Meta:
-        model = Genre
-        fields = ('name', 'slug')
+        model = User
+        fields = ['username', 'email']
+
+    def create(self, validated_data):
+        obj = User.objects.create_user(**validated_data)
+        # вызов функции отправки сообщения на почту
+        api.views.send_message(
+            validated_data['email'],
+            validated_data['username']
+        )
+        return obj
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Category
-        fields = ('name', 'slug')
+        fields = [
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
+        ]
+        model = User
+        read_only_fields = ('role',)
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = [
+            'username',
+            'email',
+            'first_name',
+            'last_name',
+            'bio',
+            'role'
+        ]
+
+
+class GetTokenSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    confirmation_code = serializers.CharField()
 
 
 class CommentSerializer(serializers.ModelSerializer):
