@@ -1,8 +1,8 @@
 from django.db import models
 from django.core.validators import (
-    RegexValidator, MinValueValidator, MaxValueValidator)
+    RegexValidator, MinValueValidator, MaxValueValidator
+)
 from django.contrib.auth.models import AbstractUser
-
 from datetime import datetime
 
 
