@@ -5,14 +5,9 @@ from reviews.models import Title
 
 class TitleFilter(FilterSet):
 
-    genre = CharFilter(method='slug_filter')
-    category = CharFilter(method='slug_filter')
-    name = CharFilter(lookup_expr='icontains')
-
-    def slug_filter(self, queryset, name, value):
-        if name == 'genre':
-            return queryset.filter(genre__slug=value)
-        return queryset.filter(category__slug=value)
+    genre = CharFilter(lookup_expr='icontains', field_name='genre__slug')
+    category = CharFilter(lookup_expr='icontains', field_name='category__slug')
+    name = CharFilter(lookup_expr='icontains', field_name='name')
 
     class Meta:
         model = Title
