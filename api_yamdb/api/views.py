@@ -1,18 +1,59 @@
-from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
+from django.core.mail import send_mail
 from django.utils.crypto import get_random_string
-from rest_framework import permissions, status, viewsets
+
+from rest_framework import viewsets, filters, permissions, status
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import AccessToken
-from reviews.models import User, UserAuth, Review, Title
 
-from .permissions import IsAdmin, IsAdminModeratorOwnerOrReadOnly
-from .serializers import (GetTokenSerializer, SignUpSerializer,
-                          UserProfileSerializer, UserSerializer,
-                          CommentSerializer, ReviewSerializer)
+from reviews.models import (
+    Title, Category,
+    Genre, Review,
+    User, UserAuth
+)
+from .serializers import (
+    TitleSerializer,
+    CategorySerializer, GenreSerializer,
+    CommentSerializer, ReviewSerializer,
+    GetTokenSerializer, SignUpSerializer,
+    UserProfileSerializer, UserSerializer,
+    CommentSerializer, ReviewSerializer
+)
+from .mixins import ViewDeleteSet
+from .permissions import (
+    IsAdminOrReadOnly,
+    IsAdminModeratorOwnerOrReadOnly,
+    IsAdmin
+)
+from .filters import TitleFilter
+
+
+class GenreViewSet(ViewDeleteSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class CategoryViewSet(ViewDeleteSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    filterset_class = TitleFilter
 
 
 class SignUpCreate(viewsets.ViewSet):

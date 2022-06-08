@@ -1,9 +1,72 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
-from reviews.models import Comment, Review, Title, User
 
+from reviews.models import (Comment, Review, Title, Genre, Category, User)
 import api.views
+
+
+class CategorySerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Category
+        fields = ('name', 'slug')
+        lookup_field = 'slug'
+
+
+class GenreSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Genre
+        fields = ('name', 'slug')
+        lookup_field = 'slug'
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    genre = serializers.SlugRelatedField(
+        queryset=Genre.objects.all(),
+        many=True,
+        slug_field='slug'
+    )
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        many=True,
+        slug_field='slug'
+    )
+    rating = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Title
+        fields = ('__all__')
+
+    def get_rating(self, obj):
+        reviews = obj.reviews.all()
+        if reviews.exists():
+            average_rating = 0
+            for review in reviews:
+                average_rating += review.score
+            return (average_rating / len(reviews))
+        return None
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        genre_list = []
+        for genre_slug in data['genre']:
+            genre = Genre.objects.get(slug=genre_slug)
+            genre_dict = {
+                'name': genre.name,
+                'slug': genre.slug
+            }
+            genre_list.append(genre_dict)
+
+        category = Category.objects.get(slug=data['category'][0])
+        category_dict = {
+            'name': category.name,
+            'slug': category.slug
+        }
+        data['genre'] = genre_list
+        data['category'] = category_dict
+        return data
 
 
 class SignUpSerializer(serializers.ModelSerializer):
