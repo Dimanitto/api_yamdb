@@ -1,3 +1,5 @@
+from django.db.models import Avg
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -40,12 +42,8 @@ class TitleSerializer(serializers.ModelSerializer):
         fields = ('__all__')
 
     def get_rating(self, obj):
-        reviews = obj.reviews.all()
-        if reviews.exists():
-            average_rating = 0
-            for review in reviews:
-                average_rating += review.score
-            return (average_rating / len(reviews))
+        if obj.reviews.exists():
+            return obj.reviews.aggregate(Avg('score')).get('score__avg')
         return None
 
     def to_representation(self, instance):
