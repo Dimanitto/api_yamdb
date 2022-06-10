@@ -94,11 +94,11 @@ def send_message(email: str, username: str) -> None:
     )
 
     send_mail(
-        'Авторизация на сайтe',
-        (f'Уважаемый {username}, '
-         f'Kод подтверждения = {secret_key}'),
-        'yamdb@yandex.ru',  # Это поле "От кого"
-        [email],  # Это поле "Кому"
+        subject='YaMDb registration',
+        message=(f'Уважаемый {username}, '
+                 f'Kод подтверждения = {secret_key}'),
+        from_email=None,
+        recipient_list=[email],  # Это поле "Кому"
     )
 
 
