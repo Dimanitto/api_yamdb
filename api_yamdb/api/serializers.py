@@ -1,3 +1,4 @@
+from unicodedata import category
 from django.db.models import Avg
 
 from rest_framework import serializers
@@ -32,14 +33,21 @@ class TitleSerializer(serializers.ModelSerializer):
     )
     category = serializers.SlugRelatedField(
         queryset=Category.objects.all(),
-        many=True,
         slug_field='slug'
     )
     rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Title
-        fields = ('__all__')
+        fields = (
+            'id',
+            'name',
+            'year',
+            'rating',
+            'description',
+            'genre',
+            'category'
+        )
 
     def get_rating(self, obj):
         if obj.reviews.exists():
@@ -56,8 +64,7 @@ class TitleSerializer(serializers.ModelSerializer):
                 'slug': genre.slug
             }
             genre_list.append(genre_dict)
-
-        category = Category.objects.get(slug=data['category'][0])
+        category = Category.objects.get(slug=data['category'])
         category_dict = {
             'name': category.name,
             'slug': category.slug
@@ -124,10 +131,6 @@ class GetTokenSerializer(serializers.Serializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    review = serializers.SlugRelatedField(
-        slug_field='text',
-        read_only=True
-    )
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
@@ -135,14 +138,15 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = (
+            'id',
+            'text',
+            'author',
+            'pub_date'
+        )
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    title = serializers.SlugRelatedField(
-        slug_field='name',
-        read_only=True,
-    )
     author = serializers.SlugRelatedField(
         default=serializers.CurrentUserDefault(),
         slug_field='username',
@@ -162,4 +166,10 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = '__all__'
+        fields = (
+            'id',
+            'text',
+            'author',
+            'score',
+            'pub_date'
+        )
