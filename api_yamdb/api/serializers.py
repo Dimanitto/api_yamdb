@@ -1,4 +1,3 @@
-from unicodedata import category
 from django.db.models import Avg
 
 from rest_framework import serializers
