@@ -1,3 +1,11 @@
+# Проект YaMDb (групповой проект).
+
+## Технологии:
+[![Python](https://img.shields.io/badge/-Python-464646?style=flat&logo=Python&logoColor=56C0C0&color=008080)](https://www.python.org/)
+[![Django](https://img.shields.io/badge/-Django-464646?style=flat&logo=Django&logoColor=56C0C0&color=008080)](https://www.djangoproject.com/)
+[![Django REST Framework](https://img.shields.io/badge/-Django%20REST%20Framework-464646?style=flat&logo=Django%20REST%20Framework&logoColor=56C0C0&color=008080)](https://www.django-rest-framework.org/)
+[![JWT](https://img.shields.io/badge/-JWT-464646?style=flat&color=008080)](https://jwt.io/)
+
 # Описание
 
 Проект YaMDb собирает отзывы (Review) пользователей на произведения (Title). Произведения делятся на категории: "Книги", "Фильмы", "Музыка". Список категорий (Category) может быть расширен.
@@ -71,3 +79,8 @@ python manage.py runserver
 Структура запросов и ответов API документирована в ReDoc.
 
 После запуска проекта документация доступна по адресу http://localhost:8000/redoc/
+
+## Авторы
+- :white_check_mark: [Dimanitto (в роли Python-разработчика Тимлид - разработчик 1)](https://github.com/dimanitto)
+- :white_check_mark: [Tsarev-n1 (в роли Python-разработчика - разработчик 2)](https://github.com/Tsarev-n1)
+- :white_check_mark: [Gavral (в роли Python-разработчика - разработчик 3)](https://github.com/Gavral)
